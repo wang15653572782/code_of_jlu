@@ -1,0 +1,439 @@
+实验内容
+基础部分：
+1、使六位数码管从右到左逐位显示移动的数字0到9，即数字0从最右端移动到最左端，数字1从最右端移动到最左端，…，数字9从最右端移动到最左端，循环上述过程：
+2、使六位数码管从左到右显示稳定的数字"123456"
+拓展部分：
+3、在数码管上显示学号后6位，并使用6个开关控制对应数码管的亮灭(例如，开关为1点亮，为0熄灭)。
+4、在左侧的三个数码管上显示“123”，每隔1秒钟(可用软件延时，也可用8254定时)“123”向右移动一位(循环)。
+
+代码
+1.
+A8255 EQU 0600H
+B8255 EQU 0602H
+C8255 EQU 0604H  
+CON8255 EQU 0606H
+
+DATA SEGMENT
+    TABLE1:       ;段码表
+        DB 3FH    ;0
+        DB 06H    ;1
+        DB 5BH    ;2
+        DB 4FH    ;3
+        DB 66H    ;4
+        DB 6DH    ;5
+        DB 7DH    ;6
+        DB 07H    ;7
+        DB 7FH    ;8
+        DB 6FH    ;9
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX   
+        
+    MOV DX,CON8255
+    MOV AL,81H     ;A,B--OUT,LOW 4 BITS OF C--IN
+    OUT DX,AL    
+    
+    MOV DX,A8255
+    MOV AL,00H       ;选择所有数码管
+    OUT DX,AL
+    MOV DX,B8255
+    MOV AL,00H      ;给所有数码管送段码00H，即让所有数码管熄灭
+    OUT DX,AL
+    
+    LEA BX,TABLE1    ;TABLE1的偏移地址送BX
+    MOV SI,0         ;TABLE1的相对偏移地址送SI，初始为0 
+    MOV DX,A8255
+    MOV AL,11011111B  ;初始选择最高位数码管，即最右端的数码管    
+MAIN:  
+X1:
+    CMP AL,01111111B  ;判断数码管是否到达最左端(最左端对应的位码应是11111110B)
+    JZ X2   
+    OUT DX,AL         ;选择数码管
+    PUSH AX
+    MOV DX,B8255
+    MOV AL,[BX+SI]
+    OUT DX,AL         ;送段码  
+    CALL DELAY
+    POP AX  
+    JMP X1
+X2: 
+    INC SI
+    MOV AL,11011111B   
+    CMP SI,10
+	JZ X3
+	JMP MAIN
+X3:
+    MOV SI,0  
+    JMP MAIN     
+
+   
+    
+DELAY:
+    PUSH CX
+    MOV CX,0FFFFH
+X4: PUSH AX
+    POP AX
+    LOOP X4
+    POP CX
+    RET
+CODE ENDS
+     END START
+
+
+
+
+别人的基础实验代码：
+;8255接口初始化，由CS连接的IOY端口决定。
+A8255_CON EQU 0606H
+A8255_A EQU 0600H
+A8255_B EQU 0602H
+A8255_C EQU 0604H
+;数码管的数据表，分别表示0-9
+DATA SEGMENT
+TABLE1:
+    DB 3FH
+    DB 06H
+    DB 5BH
+    DB 4FH
+    DB 66H
+    DB 6DH
+    DB 7DH
+    DB 07H
+    DB 7FH
+    DB 6FH
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX  ;指定段起始地址
+    LEA SI,TABLE1
+    MOV DX,A8255_CON
+    MOV AL,81H  ;81H=10000001，A口方式0输出，C口高四位输出，B口方式0输出，C口低四位输入
+    OUT DX,AL
+    MOV DX,A8255_B
+    MOV AL,3FH   ;3FH，数字0
+    OUT DX,AL
+    MOV DX,A8255_A
+    MOV AL,00H   ;最低位显示
+    OUT DX,AL
+    MOV CX,0AH
+    MOV BX,0000H
+X1: 
+    PUSH CX
+    MOV CX,06H
+    MOV AL,11011111B
+X2:
+    MOV DX,A8255_A
+    OUT DX,AL
+    ROR AL,1
+    PUSH AX
+    MOV AL,[BX+SI]
+    MOV DX,A8255_B
+    OUT DX,AL
+    POP AX
+    CALL DELAY
+    LOOP X2
+    POP CX
+    INC BX
+    LOOP X1
+    JMP START
+DELAY:
+    PUSH CX
+    MOV CX,0FFFFH
+X4:
+    LOOP X4
+    MOV CX,0FFFFH
+X5:
+    LOOP X5
+    POP CX
+    RET
+CODE ENDS
+     END START
+
+
+
+
+
+
+
+2
+A8255 EQU 0600H
+B8255 EQU 0602H
+C8255 EQU 0604H  
+CON8255 EQU 0606H
+
+DATA SEGMENT
+    TABLE1:   ;段码表
+        DB 06H    ;1
+        DB 5BH    ;2
+        DB 4FH    ;3
+        DB 66H    ;4
+        DB 6DH    ;5
+        DB 7DH    ;6  
+    POS:                ;位码表
+        DB 11111110B    
+        DB 11111101B
+        DB 11111011B
+        DB 11110111B
+        DB 11101111B
+        DB 11011111B        
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX   
+        
+    MOV DX,CON8255
+    MOV AL,81H     ;A,B--OUT,LOW 4 BITS OF C--IN
+    OUT DX,AL    
+    
+    MOV DX,A8255
+    MOV AL,00H       ;选择所有数码管
+    OUT DX,AL
+    MOV DX,B8255
+    MOV AL,00H      ;给所有数码管送段码00H，即让所有数码管熄灭
+    OUT DX,AL
+    
+    LEA BX,TABLE1    ;TABLE1的偏移地址送BX 
+    LEA CX,POS       ;POS的偏移地址送CX
+    MOV SI,0         ;TABLE1和POS的相对偏移地址送SI，初始为0    
+MAIN:  
+    MOV DX,A8255
+    MOV AL,[BX+SI]
+    OUT DX,AL
+    MOV DX,B8255 
+    PUSH BX  
+    MOV BX,CX
+    MOV AL,[BX+SI]  
+    POP BX
+    OUT DX,AL
+    CALL DELAY
+    INC SI
+    CMP SI,6
+    JZ X1
+    JMP MAIN
+X1:
+    MOV SI,0    
+    JMP MAIN     
+    
+DELAY:
+    PUSH CX
+    MOV CX,0FFH
+X4: PUSH AX
+    POP AX
+    LOOP X4
+    POP CX
+    RET
+CODE ENDS
+     END START
+
+
+
+
+
+3
+A8255_CON EQU 0606H
+A8255_A EQU 0600H
+A8255_B EQU 0602H
+A8255_C EQU 0604H
+ 
+DATA SEGMENT
+    STUID  
+ DB 4FH  ;3  
+            DB 07H    ;7
+            DB 5BH    ;2
+            DB 4FH    ;3 
+            DB 3FH    ;0
+            DB 06H    ;1
+    bitchoose  DB 11111110B  ;位选码
+    comparevar DB 00000001B  ;用于比较  
+    NUM DB 0   ;对应的序号
+DATA ENDS 
+
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX   
+    
+    MOV DX,A8255_CON
+    MOV AL,10000001B  ;A,B均工作在方式0，A口输出，C口高4位输出，B口输出,C口低4位输出
+    OUT DX,AL 
+    LEA SI,STUID
+    
+MAIN:  
+    MOV DX,A8255_C
+    IN AL,DX                    ;读C口，判断开关状态
+    MOV bitchoose,11111110B     ;恢复初始状态 
+    MOV comparevar,00000001B
+    MOV NUM,0
+    CALL GETSERIALNUM
+    JMP MAIN    
+    
+GETSERIALNUM:        ;判断高电平位置   
+    PUSH CX     
+    MOV CX,6
+GET2:      
+    PUSH AX
+    AND AL,comparevar
+    JNZ GET1
+    JMP GET3
+GET1:
+    CALL SHOWLED 
+GET3: 
+    ROL comparevar,1
+    ROL bitchoose,1 
+    INC NUM 
+    POP AX
+    LOOP GET2        
+    POP CX
+    RET
+
+SHOWLED: 
+    PUSH AX
+    PUSH DX
+    MOV DX,A8255_A
+    MOV AL,bitchoose
+    OUT DX,AL
+    MOV DX,A8255_B
+    MOV AL,[NUM+SI] 
+    OUT DX,AL  
+    MOV DX,A8255_A
+    MOV AL,00H
+    OUT DX,AL     ;选中所有位选码
+    POP DX
+    POP AX
+    RET
+    
+DELAY:
+    PUSH CX
+    MOV CX,00FH
+X4:
+    LOOP X4
+    POP CX
+    RET
+CODE ENDS
+     END START
+
+
+
+4.
+;该份代码比较冗余，请自行删掉不必要的或者进行相应更改
+data segment
+table1:
+	db 3fh;0
+	db 06h;1
+	db 5bh;2
+	db 4fh;3
+	db 66h;4
+	db 6dh;5
+	db 7dh;6
+	db 07h;7
+	db 7fh;8
+	db 6fh;9
+data ends
+
+code segment
+	assume cs:code, ds:data
+start:
+	mov ax,data
+	mov ds,ax
+	
+    MOV AX, OFFSET MIR6
+    MOV SI, 0038H
+    MOV [ES:SI], AX
+    MOV AX, CS
+    MOV SI, 003AH
+    MOV [ES:SI], AX
+	
+    CLI
+    MOV AL, 11H
+    OUT 20H, AL
+    MOV AL, 08H
+    OUT 21H, AL
+    MOV AL, 04H
+    OUT 21H, AL
+    MOV AL, 03H
+    OUT 21H, AL
+    MOV AL, 3FH
+    OUT 21H, AL
+    STI
+    
+	MOV DX, 0646H;8254
+    MOV AL, 76H  ;01110110B
+    OUT DX, AL 
+    MOV DX, 0642H 
+    MOV AL, 00H
+    OUT DX, AL
+    MOV AL, 48H  ;
+    OUT DX, AL
+	
+	lea si,table1
+	mov dx,0606h
+	mov al,89h ;10001001B  A,B口输出，C口输入
+	out dx,al
+	mov dx,0602h
+	mov al,3fh
+	out dx,al
+	mov dx,0600h
+	mov al,00h
+	out dx,al
+	
+	mov ah,11111110b	
+begin:	
+    mov cx,0ah
+	mov bx,0001h
+aa1:
+	push cx
+	mov cx,03h
+    mov al,ah
+aa2:
+	call light
+	rol al,1
+	cmp al,10111111b
+	jnz b11
+	mov al,11111110b
+	b11:
+	inc bx
+	loop aa2
+	
+	pop cx
+	mov bx,0001h    ;恢复bx的值
+	loop aa1
+	jmp begin
+
+	
+light:
+	;al:position
+	;bx:content
+	mov dx,0600h
+	out dx,al
+	push ax
+	mov al,[bx+si]
+	mov dx,0602h
+	out dx,al
+	pop ax
+	call delay
+	ret
+	
+MIR6:
+	rol ah,1
+	cmp ah,10111111b
+	jnz endi
+	mov ah,11111110b
+	endi:
+	iret
+	
+delay:
+	push cx
+	mov cx,0a00h
+	lop:loop lop
+	pop cx
+	ret
+code ends
+	end start

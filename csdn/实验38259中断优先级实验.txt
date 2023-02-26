@@ -1,0 +1,322 @@
+实验内容
+基础部分：
+1、编写中断实验程序：主程序通过8255的PB口输出0FFH，使数据灯D0~D7全亮；IR6中断服务程序使绿灯亮(红灯灭)，延时一段时间后返回主程序；IR7中断服务程序使红灯亮(绿灯灭)，延时一段时间后返回主程序。（要求：按单脉冲开关KK1+响应IR6中断请求；按单脉冲开关KK2+响应IR7中断请求。）
+拓展部分：
+2、使用单脉冲开关控制LED等的移动方向：
+
+初始时D7点亮，其余灯熄灭；
+任意时刻按下KK1，点亮的LED灯立即向右移动，到达最右侧时停止；
+任意时刻按下KK2，点亮的LED灯立即向左移动，到达最左侧时停止。
+3、对2做如下改动：（讲义上没有）
+若点亮的LED灯在向左移动过程中按下KK1，则立即改变方向，向右移动，到达最右侧后，LED灯从改变方向的位置接着向左移动，到达最左侧时停止；
+若点亮的LED灯在向右移动过程中按下KK2，则不会立即改变方向，而是继续向右移动，直至到达最右侧后才开始向左移动，到达最左侧是停止。
+————————————————
+代码
+
+1
+;注意要实现优先级关系，即其中的一个中断优先级比另一个高
+DATA SEGMENT
+    SIGN DB 00H  
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,0000H        
+    MOV DS,AX           ;设置数据段地址
+    
+    MOV DX,0646H 
+    MOV AL,90H         
+    OUT DX,AL       ;初始化方式字，A口读入，B口输出
+    
+	;设置中断向量
+    MOV AX,OFFSET MIR6
+    MOV SI,0038H
+    MOV [SI],AX
+    MOV AX,CS
+    MOV SI,003AH
+    MOV [SI],AX
+
+    MOV AX,OFFSET MIR7
+    MOV SI,003CH
+    MOV [SI],AX
+    MOV AX,CS
+    MOV SI,003EH
+    MOV [SI],AX
+    
+    CLI  ;关中断
+	;设置ICW1~ICW4和OCW1
+    MOV AL, 11H     
+    OUT 20H, AL
+    MOV AL, 08H
+    OUT 21H, AL
+    MOV AL, 04H
+    OUT 21H, AL
+    MOV AL, 07H
+    OUT 21H, AL
+    MOV AL, 2FH
+    OUT 21H, AL
+    STI  ;关中断
+    
+AA1:         ;主程序，让红灯绿灯全亮
+    MOV DX, 0642H
+    MOV AL, 0FFH
+	OUT DX, AL
+	JMP AA1
+MIR6:
+    MOV DX,0642H
+	MOV AL, 0FH    
+    OUT DX, AL    ;亮绿灯
+    CALL DELAY    ;延时
+    CALL DELAY
+    CALL DELAY
+    CALL DELAY
+	CMP SIGN,01H  ;判断SIGN是否为1
+	JZ RED        ;若为1则跳到RED
+	JMP BACK      ;否则直接中断返回
+RED: ;当发生嵌套中断时，高优先级中断结束后回复到低优先级中断状态，即绿灯亮完后红灯亮
+	MOV DX, 0642H
+    MOV AL, 0F0H    ;亮红灯
+    OUT DX, AL
+BACK:
+	IRET
+	
+MIR7:
+	STI
+	MOV SIGN,01H   ;SIGN置1，表示此时发生了MIR7中断
+    MOV DX,0642H
+    MOV AL,0F0H    
+    OUT DX,AL      ;亮红灯
+    CALL DELAY     ;延时
+    CALL DELAY
+    CALL DELAY
+    CALL DELAY
+	MOV SIGN,00H   ;执行完恢复标志位为0 
+	IRET；中断返回（iret 是中断服务子程序的返回指令。
+用于从中断返回，会弹出IP/EIP，然后CS，以及一些标志。然后从CS：IP执行。）
+	
+;延时子程序
+DELAY PROC NEAR  
+	MOV CX,0FFFFH
+	LOOP $ ；（LOOP $ 的作用是 一直执行当前指令（即LOOP指令））
+	RET；（ret 是普通的子程序的返回指令。
+也可以叫做近返回，即段内返回。处理器从堆栈中弹出IP或者EIP，然后根据当前的CS：IP跳转到新的执行地址。如果之前压栈的还有其余的参数，则这些参数也会被弹出。）
+DELAY ENDP 
+ 
+CODE ENDS
+    END START
+
+
+
+
+2：
+DATA SEGMENT 
+    SIGN DB 00H    ;通过在中断中改变该变量的值控制移动方向
+DATA ENDS
+CODE SEGMENT 
+    ASSUME CS:CODE,DS:DATA
+START: 
+    MOV AX, 0000H
+    MOV DS, AX           ;设置数据段地址
+ 
+    MOV DX, 0646H
+    MOV AL, 90H
+    OUT DX, AL        ;将方式字传入8255的控制口
+    MOV DX, 0642H       
+    MOV AL,80H        ;初始状态让D7亮，其它灭
+    OUT DX,AL         ;B口输出80H,即点亮D7灯
+    
+	;设置中断向量
+    MOV AX, OFFSET MIR6
+    MOV SI, 0038H      
+    MOV [SI], AX       
+    MOV AX, CS         
+    MOV SI, 003AH
+    MOV [SI], AX
+    MOV AX, OFFSET MIR7
+    MOV SI, 003CH
+    MOV [SI], AX
+    MOV AX, CS
+    MOV SI, 003EH
+    MOV [SI], AX
+ 
+    CLI               ;关中断
+    MOV AL, 11H
+    OUT 20H, AL
+    MOV AL, 08H
+    OUT 21H, AL
+    MOV AL, 04H
+    OUT 21H, AL
+    MOV AL, 07H
+    OUT 21H, AL
+    MOV AL, 2FH
+    OUT 21H, AL
+    STI                ;允许中断
+ 
+MI:
+	CMP SIGN,00H
+	JZ MI
+    CMP SIGN,02H      ;判断SIGN是否为2
+    JE AA2			  ;若是则跳到AA2
+AA1: 
+    MOV DX, 0642H
+    IN AL,DX          ;读B口
+    CMP AL,01H        ;判断灯是否到达最右端
+    JE AAA1             ;如果是则直接回到MI判断SIGN，如果SIGN不变则灯的状态不变
+    ROR AL,1          ;否则指示灯右移
+    CALL DELAY        ;延时
+    CALL DELAY
+    CALL DELAY
+    CALL DELAY
+    OUT DX,AL         ;B口输出
+    JMP MI            ;回到MI继续判断SIGN
+AAA1:
+	MOV SIGN,00H
+	JMP MI 
+ 
+AA2: 
+    MOV DX, 0642H
+    IN AL,DX
+    CMP AL,80H       ;判断灯是否到达最左端
+    JE AAA2            ;如果是则直接回到MI判断SIGN，如果SIGN不变则灯的状态不变
+    ROL AL,1         ;否则指示灯左移
+    CALL DELAY       ;延时
+    CALL DELAY
+    CALL DELAY
+    CALL DELAY
+    OUT DX,AL        ;B口输出
+    JMP MI           ;回到MI继续判断SIGN
+AAA2:
+	MOV SIGN,00H
+	JMP MI
+ 
+MIR6:
+    STI              ;开中断
+    MOV SIGN,01H     ;SIGN赋为01H向右移动
+    IRET
+ 
+MIR7:  
+    STI              ;开中断
+    MOV SIGN,02H     ;SIGN赋为02H向左移动
+    IRET
+
+;延时子程序
+DELAY PROC NEAR  
+	MOV CX,0FFFFH
+	LOOP $
+	RET
+DELAY ENDP 
+ 
+CODE ENDS
+    END START
+
+
+
+3.（讲义上没有这个扩展实验）
+DATA SEGMENT 
+    SIGN DB 00H    ;通过在中断中改变该变量的值控制移动方向
+DATA ENDS
+CODE SEGMENT 
+    ASSUME CS:CODE,DS:DATA
+START: 
+    MOV AX, 0000H
+    MOV DS, AX           ;设置数据段地址
+ 
+    MOV DX, 0646H
+    MOV AL, 90H
+    OUT DX, AL        ;将方式字传入8255的控制口
+    MOV DX, 0642H       
+    MOV AL,80H        
+    OUT DX,AL         ;B口输出80H,即点亮D7灯
+    ;将D7点，D6-D0熄灭
+    MOV AX, OFFSET MIR6
+    MOV SI, 0038H      ;中断向量的起始地址
+    MOV [SI], AX       ;先存有效地址
+    MOV AX, CS         ;再存段地址
+    MOV SI, 003AH
+    MOV [SI], AX
+ 
+    MOV AX, OFFSET MIR7
+    MOV SI, 003CH
+    MOV [SI], AX
+    MOV AX, CS
+    MOV SI, 003EH
+    MOV [SI], AX
+ 
+    CLI               ;禁止中断发生
+    MOV AL, 11H
+    OUT 20H, AL
+    MOV AL, 08H
+    OUT 21H, AL
+    MOV AL, 04H
+    OUT 21H, AL
+    MOV AL, 01H
+    OUT 21H, AL
+    MOV AL, 3FH
+    OUT 21H, AL
+    STI                ;允许中断发生
+    ;与主实验相同部分此处不再赘述
+    ;下面的AA1与AA2相当于两个主程序，控制灯的右移和左移
+ 
+MI:
+    CMP SIGN 01H      ;判断SIGN是否为1
+    JE AA2
+AA1: 
+    MOV DX, 0642H
+    IN AL,DX          ;读入当前灯的状态
+    CMP AL,01H
+    JE MI            ;判断灯是否是最右侧亮，如果是则不变，不是则继续移动
+    ROR AL,1         ;将AL循环右移1位
+    MOV CX,0FFFFH
+L1:
+    LOOP L1
+    MOV CX,0FFFFH
+L2:
+    LOOP L2
+    MOV CX,0FFFFH
+L3:
+    LOOP L3
+    MOV CX,0FFFFH
+L4:
+    LOOP L4          ;延时
+    OUT DX,AL        ;从8255B口输出右移后的灯的状态
+    JMP MI
+ 
+AA2: 
+    MOV DX, 0642H
+    IN AL,DX
+    CMP AL,80H
+    JE MI            ;判断灯是否是最左侧亮，如果是则不变，不是则继续移动
+    ROL AL,1         ;将AL循环左移1位
+    MOV CX,0FFFFH
+L5:
+    LOOP L5
+    MOV CX,0FFFFH
+L6:
+    LOOP L6
+    MOV CX,0FFFFH
+L7:
+    LOOP L7
+    MOV CX,0FFFFH
+L8:
+    LOOP L8         ;延时
+    OUT DX,AL       ;从8255B口输出右移后的灯的状态
+    JMP MI
+ 
+MIR6:
+    STI         
+    PUSH AX         ;保存中断时AX信息
+    MOV SIGN,00H    ;按下KK1+，灯右移，跳转到AA1
+    MOV AL,20H
+    OUT 20H,AL
+    IRET                        
+ 
+MIR7:  
+    STI 
+    MOV SIGN,01H    ;按下KK2+，灯左移，跳转到AA2
+    MOV AL,20H
+    OUT 20H,AL
+    IRET
+    
+CODE ENDS
+    END START
+

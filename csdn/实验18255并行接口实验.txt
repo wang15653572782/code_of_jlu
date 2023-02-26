@@ -1,0 +1,120 @@
+实验内容
+基础部分
+1、编写一个基本输入输出程序，使8255的A口为输入，B口为输出，完成拨动开关到数据灯的数据传输。要求：数据灯的显示随开关动态变化。
+拓展部分
+在基础实验上增加如下功能：若开关K7~K0均为高电平，则程序退出。
+2、当K0为高电平时，数据灯高4位亮；当K0为低电平时，数据灯低4位亮。
+3、当K1K0=00时，数据灯全部熄灭；当K1K0=01时，数据灯低4位亮；当K1K0=10时，数据灯高4位亮；当K1K0=11时，数据灯全亮。
+————————————————
+代码
+1
+;Select chip-select IOY0
+A8255 EQU 0600H
+B8255 EQU 0602H
+C8255 EQU 0604H
+CON8255 EQU 0606H
+
+CODE SEGMENT
+	ASSUME CS:CODE
+START:	
+	MOV DX,CON8255
+	MOV AL,90H    ;A--IN,B--OUT
+	OUT DX,AL
+	
+MAIN:
+	MOV DX,A8255  ;Read from port A
+	IN AL,DX
+	MOV DX,B8255  ;Send to port B
+	OUT DX,AL	
+	JMP MAIN	
+	
+CODE ENDS
+	END START	
+
+
+2.
+;Select chip-select IOY0
+A8255 EQU 0600H
+B8255 EQU 0602H
+C8255 EQU 0604H
+CON8255 EQU 0606H
+
+CODE SEGMENT
+	ASSUME CS:CODE
+START:	
+	MOV DX,CON8255
+	MOV AL,90H    ;A--IN;B--OUT
+	OUT DX,AL
+	
+MAIN:
+	MOV DX,A8255  
+	IN AL,DX      ;Read A
+	CMP AL,0FFH   ;Judge whether all of the bits are high
+	JZ EXIT       ;If so,just quit; 
+	AND AL,01H    ;Let other bits 0 except K0
+	CMP AL,1H
+	JNZ X1
+	MOV AL,0F0H   ;If input is 1,let high 4 bits light up
+	JMP OUTPUT
+X1:
+	MOV AL,0FH    ;or let low 4 bits light up
+OUTPUT:
+	MOV DX,B8255
+	OUT DX,AL			
+	JMP MAIN	
+	
+EXIT:             ;quit
+	MOV AH,4CH
+	INT 21H
+	
+CODE ENDS
+	END START	
+
+
+3.
+A8255 EQU 0600H
+B8255 EQU 0602H
+C8255 EQU 0644H
+CON8255 EQU 0646H
+
+CODE SEGMENT
+	ASSUME CS:CODE
+START:	
+	MOV DX,CON8255
+	MOV AL,90H    ;A--IN,B--OUT
+	OUT DX,AL
+	
+MAIN:
+	MOV DX,A8255
+	IN AL,DX
+	CMP AL,0FFH
+	JZ EXIT   
+	AND AL,03H  ;let other bits 0 except K0,K1
+	CMP AL,0H
+	JNZ X1
+	MOV AL,00H
+	JMP OUTPUT
+X1:
+	CMP AL,1H
+	JNZ X2
+	MOV AL,0FH
+	JMP OUTPUT
+X2:
+	CMP AL,2H
+	JNZ X3
+	MOV AL,0F0H
+	JMP OUTPUT
+X3:
+	MOV AL,0FFH
+OUTPUT:
+	MOV DX,B8255
+	OUT DX,AL			
+	JMP MAIN	
+	
+EXIT:
+	MOV AH,4CH
+	INT 21H
+	
+CODE ENDS
+	END START	
+
