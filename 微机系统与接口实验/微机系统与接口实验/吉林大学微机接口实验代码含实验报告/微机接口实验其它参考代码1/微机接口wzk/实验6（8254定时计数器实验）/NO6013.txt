@@ -1,0 +1,61 @@
+CODE SEGMENT
+	ASSUME CS:CODE
+START:
+
+	MOV DX,0606H
+	MOV AL,72H
+	OUT DX,AL
+	MOV DX,0602H
+	MOV AL,00H
+	OUT DX,AL
+	MOV AL,0FFH
+	OUT DX,AL
+
+
+
+CODE ENDS
+	END START
+
+
+
+CODE SEGMENT
+     ASSUME CS:CODE
+START: MOV  DX,0000H
+       MOV  DS,DX
+       
+       MOV  DX,0606H   
+       MOV  AL,70H
+       OUT  DX,AL
+       
+       MOV  AL,00H
+       MOV  DX,0602H
+       OUT  DX,AL
+       
+       MOV  AL,048H
+       MOV  DX,0602H
+       OUT  DX,AL
+  
+
+CODE ENDS
+     END START
+
+
+CODE SEGMENT
+     ASSUME CS:CODE
+START: MOV  DX,0000H
+       MOV  DS,DX
+       
+       MOV  DX,0606H   
+       MOV  AL,76H
+       OUT  DX,AL
+       
+       MOV  AL,00H
+       MOV  DX,0602H
+       OUT  DX,AL
+       
+       MOV  AL,48H
+       MOV  DX,0602H
+       OUT  DX,AL 
+
+CODE ENDS
+     END START

@@ -1,0 +1,51 @@
+code segment
+     assume cs:code
+start:mov dx,0646h
+      mov al,90h
+      out dx,al
+a1:mov dx,0640h
+   in al,dx
+   mov dx,0642h
+   out dx,al
+   jmp a1
+code ends
+   end start
+
+code segment
+     assume cs:code
+start:mov dx,0646h
+      mov al,90h
+      out dx,al
+a1:mov dx,0640h
+   in al,dx
+   mov dx,0642h
+   cmp al,0ffh
+   jz a2
+   out dx,al
+   jmp a1
+a2:mov al,00h
+   out dx,al
+   mov ah,4ch
+   int 21h
+code ends
+   end start
+
+code segment
+     assume cs:code
+start:mov dx,0646h
+      mov al,90h
+      out dx,al
+a1:mov dx,0640h
+   in al,dx
+   sar al,1;算术右移
+   jc a2;k0为高电平
+   mov dx,0642h
+   mov al,0fh
+   out dx,al
+   jmp a1
+a2:mov dx,0642h
+   mov al,0f0h
+   out dx,al
+   jmp a1
+code ends
+   end start

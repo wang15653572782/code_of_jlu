@@ -1,0 +1,57 @@
+IO8255A EQU 0600H
+IO8255B EQU 0602H
+IO8255CON EQU 0606H
+
+STACKS  SEGMENT STACK
+  DW 128 DUP(?)
+STACKS  ENDS
+
+DATA SEGMENT
+T1: 	DB 3FH
+        DB 06H
+        DB 5BH
+        DB 4FH
+        DB 66H
+        DB 6DH
+        DB 7DH
+        DB 07H
+        DB 7FH
+        DB 6FH
+CHOOSE EQU 1        
+DATA ENDS
+CODE SEGMENT
+  ASSUME  CS:CODE,DS:DATA,SS:STACKS
+START:  MOV AX,DATA
+        MOV DS,AX
+        MOV DX,IO8255CON
+        MOV AL,80H
+        OUT DX,AL
+        
+Y:      LEA SI,T1
+Y0:     MOV BX,1;³õÊ¼
+        MOV AH,11111110B
+Y1:     MOV DX,IO8255A
+        MOV AL,AH
+        OUT DX,AL
+	MOV AL,[BX+SI]
+     	MOV DX,IO8255B
+        OUT DX,AL
+        ROL AH,1 ;×óÓÒÆ«ÒÆ
+        INC BX;JIAYI
+        CALL DELAY
+        CMP BX,00000111B;
+        JNZ Y1
+        JMP Y0
+
+        MOV AH,4CH
+        INT 21H
+DELAY:  MOV CX,0FFH
+AA1:    NOP
+        LOOP AA1
+        RET
+DELAYLL:  MOV CX,0FFFFH
+AA2:    NOP
+        LOOP AA2
+        RET
+CODE ENDS
+  END START	

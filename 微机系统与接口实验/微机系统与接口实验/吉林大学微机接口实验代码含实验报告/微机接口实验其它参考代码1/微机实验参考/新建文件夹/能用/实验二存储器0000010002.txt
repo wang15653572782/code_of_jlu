@@ -1,0 +1,57 @@
+;Ë«×Ö½Ú´æÊý
+;00 00 01 00 02 00 03 00
+;04 00 05 00 06 00 07 00
+
+data segment
+data ends
+sstack segment
+sstack ends
+code segment
+start:
+  assume cs:code,ds:data,ss:sstack
+  write proc far
+mov ax,8000h
+mov ds,ax
+mov si,0000h
+mov cx,16
+;mov ah,00h
+mov ax,0000h
+l1:
+mov [si],ax
+inc ax
+;inc si
+add si,2
+loop l1
+mov ah,4ch
+int 21h
+write endp
+code ends
+end start
+;
+;
+;
+data segment
+data ends
+sstack segment
+sstack ends
+code segment
+start:
+  assume cs:code,ds:data,ss:sstack
+  write proc far
+mov ax,8000h
+mov ds,ax
+mov si,0000h
+mov cx,16
+;mov ah,00h
+mov ax,0000h
+l1:
+mov [si],ax
+inc ax
+;inc si
+add si,2
+loop l1
+mov ah,4ch
+int 21h
+write endp
+code ends
+end start

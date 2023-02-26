@@ -1,0 +1,69 @@
+DATA SEGMENT
+  TABLE:
+  DB 3FH
+  DB 06H
+  DB 5BH
+  DB 4FH
+  DB 66H
+  DB 6DH
+  DB 7DH
+  DB 07H
+  DB 7FH
+  DB 6FH
+
+DATA ENDS
+
+CODE SEGMENT
+  ASSUME CS:CODE ,DS:DATA
+START:
+A:
+  MOV AX,DATA
+  MOV DS,AX
+  MOV AL,81H
+  MOV DX,0606H
+  OUT DX,AL
+  
+
+  MOV SI,0
+  LEA SI,TABLE   ;取断码表首址
+  MOV BX,0   ;段码表索引初值
+
+X:
+    MOV AH,0DFH     ;位选初值，从最右端开始
+  MOV CX,06H       ;循环一圈
+ 
+X1:
+  MOV AL,[BX+SI]    	;取数的断码，首次取1
+  MOV DX,0602H
+  OUT DX,AL        ;送段选码，B端口
+  MOV AL,AH
+  MOV DX,0600H
+  OUT DX,AL
+  ROR AH,1     ;形成下一个位选码
+  CALL DELAY  
+  CALL DELAY 
+  CALL DELAY 
+  LOOP X1 
+  INC BX
+  CMP BX,10     ;计数10次
+  JNZ X
+  JMP  A
+  MOV AH,4CH
+  INT 21H
+  
+DELAY:
+  PUSH CX
+  MOV CX,0FFH
+  MOV BH,0FFH
+D:
+  DEC BH
+  JNZ D
+  LOOP D
+  POP CX
+  RET 
+  
+CODE ENDS
+END START
+
+
+

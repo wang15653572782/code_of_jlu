@@ -1,0 +1,46 @@
+CODE SEGMENT
+	ASSUME CS:CODE
+START:
+
+MOV AL,0B6H			;方式3，初始化8254
+MOV DX,06C6H
+OUT DX,AL
+MOV AX,1000
+MOV DX,06C4H
+OUT DX,AL
+MOV AL,AH
+OUT DX,AL
+
+MOV DX,0602H		;控制口，初始化8251
+MOV AL,7EH			;8251A方式选择控制字
+OUT DX,AL
+MOV AL,35H			;8251A命令控制字
+OUT DX,AL
+
+MOV DI, 4000H		;目标地址4000H
+MOV SI, 3000H		;源地址  3000H
+
+MOV CX,10			;传输10个字节
+X1:MOV DX,0602H
+IN AL,DX			;读状态字，
+AND AL,01H			;判断TXRDY位，判断上一个数据是否发送完成，未完成则等待
+JZ X1
+MOV DX,0600H		;数据口地址
+MOV AL,[SI]			;读取一个数据
+OUT DX,AL			;输出
+Y1:MOV DX,0602H
+IN AL,DX
+AND AL,02H			;判断RXRDY是否为1，即接收字符是否就绪
+JZ Y1
+MOV DX,0600H
+IN AL,DX			;就绪则读取
+MOV [DI],AL			;读取之后写入 
+INC SI
+INC DI
+LOOP X1
+  
+MOV AH,4CH
+INT 21H
+     
+CODE ENDS
+   END START    

@@ -1,0 +1,245 @@
+data segment
+table db 3fh,06h,5bh,4fh,66h,6dh,7dh,07h,7fh,6fh,77h,7ch,39h,5eh,79h,71h
+data ends
+code segment
+     assume cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov di,3005h
+      mov dx,0606h
+      mov al,81h
+      out dx,al
+begin:mov al,0dfh
+      call dis
+      call delay
+      ;call clear
+      call cscan
+      jnz int2
+      ror al,1
+      cmp al,0fbh
+      jz begin2
+      jmp begin
+begin2:mov al,0fbh
+       call dis
+       call delay
+       ;call clear
+       call cscan
+       jnz int2
+       rol al,1
+       cmp al,0dfh
+       jz begin
+       jmp begin1
+int2:mov ch,0ffh
+     mov cl,00h
+colum:mov al,ch
+      mov dx,0600h
+      out dx,al
+      mov dx,0604h
+      in al,dx
+l1:test al,01h
+   jnz l2
+   mov al,00h
+   jmp kcode
+l2:test al,02h
+   jnz l3
+   mov al,04h
+   jmp kcode
+l3:test al,04h
+   jnz l4
+   mov al,08h
+   jmp kcode
+l4:test al,08h
+   jnz next
+   mov al,0ch
+kcode:add al,cl
+      ;call putbuf
+      push ax
+kon:call dis
+    call clear
+    call cscan
+    jnz kon
+    pop ax
+next:inc cl
+     mov al,ch
+     test al,08h
+     jz kerr
+     rol al,1
+     mov ch,al
+     jmp colum
+kerr:jmp begin
+cscan:mov al,00h
+      mov dx,0600h
+      out dx,al
+      mov dx,0606h
+      in al,dx
+      not al
+      and al,0fh
+      ret
+clear:mov dx,0602h
+      mov al,00h
+      out dx,al
+      ret
+dis:push ax
+    mov si,3000h
+    mov al,[si]
+    mov bx,offset table
+    and ax,00ffh
+    add bx,ax
+    mov al,[bx]
+    cmp al,71h
+    jz end
+    mov cl,al
+    pop ax
+    mov dx,0600h
+    out dx,al
+    push ax
+    mov cl,al
+    mov dx,0602h
+    out dx,al
+    pop ax
+    ret
+delay:push cx
+      mov cx,0ffh
+      loop $
+      pop cx
+      ret
+end:mov ah,4ch
+    int 21h
+code ends
+     end start
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+data segment
+number db 8 dup(0)
+tag db 0ffh
+table db 3fh,06h,5bh,4fh,66h,6dh,7dh,07h,7fh,6fh,77h,7ch,39h,5eh,79h,71h
+data ends
+code segment
+     assumen cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov al,81h
+      mov dx,0606h
+      out dx,al
+      lea si,number
+      lea di,table
+      mov ah,0dfh
+a0:call dis
+   ror ah,1
+a1:mov al,00h
+   mov dx,0600h
+   out dx,al
+   mov dx,0604h
+   in al,dx
+   and al,0fh
+   cmp al,0fh
+   jz a0
+   call delay
+   call delay
+   call delay
+   lea bx,tag
+   mov al,[bx]
+   inc al
+   mov [bx],al
+   mov bx,0
+   mov cl,0feh
+a2:mov al,cl
+   mov dx,0600h
+   out dx,al
+   mov dx,0604h
+   in al,dx
+   and al,0fh
+   cmp al,0fh
+   jnz a3
+   rol cl,1
+   inc bx
+   cmp cl,0efh
+   jnz a2
+   jmp a1
+a3:cmp al,0eh
+   jz a4
+   add bx,4
+   cmp al,0dh
+   jz a4
+   add bx,4
+   cmp al,0bh
+   jz a4
+   add bx,4
+   cmp al,07h
+   jz a4
+a4:mov dx,bx
+   lea bx,tag
+   mov al,cs:[bx]
+   cmp al,0
+   jz a6
+   mov bp,7
+a5:mov al,cs:[si+bp-1]
+   mov cs:[si+bp],al
+   dec bp
+   jnz a5
+a6:mov bx,dx
+   mov al,cs:[di+bx]
+   mov cs:[si],al
+   jmp a8
+a7:mov ah,0dfh  
+a8:cmp ah,0fbh
+   jz a9
+   call dis
+   ror ah,1
+   mov al,0
+   mov dx,0600h
+   out dx,al
+   mov dx,0604h
+   in al,dx
+   and al,0fh
+   cmp al,0fh
+   jnz a8
+   jmp a1
+a9:mov ah,0fbh
+a10:cmp ah,0dfh
+    jz a7
+    call dis
+    rol ah,1
+    mov al,0
+    mov dx,0600h
+    out dx,al
+    mov dx,0604h
+    in al,dx
+    and al,0fh
+    cmp al,0fh
+    jnz a10
+    jmp a1
+dis proc
+mov ch,ah
+push ax
+push bx
+push cx
+d0:mov al,cs:[si+bx]
+   cmp al,71h
+   jz end
+   mov cl,al
+   mov al,ch
+   mov dx,0600h
+   out dx,al
+   mov al,cl
+   mov dx,0602h
+   out dx,al
+   call delay
+   jmp d1
+end:mov ah,4ch
+    int 21h
+d1:pop cx
+   pop bx
+   pop ax
+   ret
+dis endp
+delay proc
+push cx
+mov cx,0ffh
+loop $
+pop cx
+ret
+delay endp
+code ends
+     end start

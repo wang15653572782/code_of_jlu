@@ -1,0 +1,50 @@
+data segment 
+     table1 db 3fh,06h,5bh,4fh,66h,6dh,7dh,07h,7fh,6fh
+   data ends
+code segment
+ assume cs:code,ds:data
+ 
+start: 
+mov ax,data
+mov ds,ax
+
+mov dx,0606h
+mov al,10000000b	;8255≥ı ºªØ
+out dx,al
+
+mov ah,11111110b
+lea si,table1
+x:
+inc si
+mov dx,0600h
+mov al,ah
+out dx,al
+mov dx,0602h
+mov al,[si]
+out dx,al
+
+call delay
+
+rol ah,1
+mov dx,0602h
+mov al,0
+out dx,al
+cmp ah,10111111b
+jnz x
+rol ah,1
+rol ah,1
+lea si,table1
+jmp x
+
+delay proc near
+	PUSH DX
+	PUSH CX
+	MOV CX,0ffH
+	LOOP $
+	POP CX
+	POP DX
+	RET
+  delay endp
+
+code ends
+end start

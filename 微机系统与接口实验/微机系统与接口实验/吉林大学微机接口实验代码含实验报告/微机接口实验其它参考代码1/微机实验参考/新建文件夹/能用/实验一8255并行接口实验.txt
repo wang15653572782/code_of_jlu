@@ -1,0 +1,15 @@
+;拨动开关K7-K0对应的LED显示
+CODE SEGMENT
+ASSUME CS:CODE 
+START:
+X1:
+      MOV AL,90H
+      MOV DX,0646H
+      OUT DX,AL
+      MOV DX,0640H
+      IN AL,DX
+      MOV DX,0642H
+      OUT DX,AL
+      JMP X1 
+      CODE ENDS
+END START 

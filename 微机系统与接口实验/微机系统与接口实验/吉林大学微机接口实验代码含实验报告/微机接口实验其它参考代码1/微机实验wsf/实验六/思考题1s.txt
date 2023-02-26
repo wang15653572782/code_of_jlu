@@ -1,0 +1,30 @@
+;使用计数器2接系统的CLK（1MHz）产生脉冲，之后out2接在计数器1的clk1上，两个计数器输入的初值均为1000（03E8H）
+CODE SEGMENT
+	ASSUME CS:CODE
+START:
+
+
+;将8254 cs接IOY0，地址是0600H
+	MOV DX,0606H
+	MOV AL,36H
+	OUT DX,AL
+	MOV DX,0600H
+	MOV AL,0E8H
+	OUT DX,AL
+	MOV AL,03H
+	OUT DX,AL;选定计数器0持续产生方波，频率为1000Hz
+
+
+	MOV DX,0606H
+	MOV AL,76H
+	OUT DX,AL;选定计数器1工作在方式3,并且写入16位数字
+	MOV DX,0602H
+	MOV AL,0E8H 
+	OUT DX,AL
+	MOV AL,03H
+	OUT DX,AL
+
+;将CLK2接在系统的CLK上
+
+CODE ENDS
+	END START

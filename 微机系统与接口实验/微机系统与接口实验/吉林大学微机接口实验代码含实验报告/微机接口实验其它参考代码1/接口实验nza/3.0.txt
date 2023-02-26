@@ -1,0 +1,76 @@
+CODE SEGMENT
+     ASSUME CS:CODE
+START:
+      MOV AX,0000H         //设置中断向量
+      MOV DS,AX
+      MOV AX,OFFSET MIR6
+      MOV SI,0038H
+      MOV [SI],AX
+      MOV SI,003AH
+      MOV [SI],AX
+      MOV AX,OFFSET MIR7
+      MOV SI,003CH
+      MOV [SI],AX
+      MOV SI,003EH
+      MOV [SI],AX
+
+      MOV AL,11H
+      OUT 20H,AL
+      MOV AL,08H
+      OUT 21H,AL
+      MOV AL,04H
+      OUT 21H,AL
+      MOV AL,03H          
+      OUT 21H,AL
+      MOV AL,2FH
+      OUT 21H,AL
+      STI
+  
+      
+      
+      MOV DX,0646H        
+      MOV AL,90H
+      OUT DX,AL
+      
+A0:  MOV AL,0FFH         ;出状态
+      MOV DX,0642H
+      OUT DX,AL
+      JMP A0
+      
+      
+MIR6: PUSH AL              
+      PUSH DX
+      PUSH CX
+                      
+     
+     
+      POP CX             
+      POP DX
+      POP AL
+      IRET                //中断返回
+      
+      
+MIR7: PUSH AL             //保护现场
+      PUSH DX
+      PUSH CX
+
+  
+  
+      POP CX             //恢复现场
+      POP DX
+      POP AL
+      IRET
+
+DELAY:              
+    PUSH CX
+    MOV CX, 0FFH
+D2: 
+    PUSH AX
+    POP AX
+    LOOP D2
+    POP CX
+    RET      
+      
+      
+CODE  ENDS
+      END START

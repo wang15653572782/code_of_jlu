@@ -1,0 +1,58 @@
+;每一次位选线重置之后，之前的显示的数字都灭掉了。
+;所以想要让数字从右到左闪过，就让延时长一点，想要从宏观上看是静止不动的数字那延时就短一点
+;每次显示结束之后，要加入清屏作业
+DATA SEGMENT
+    LIST DB 06H, 5BH, 4FH, 66H ,6DH, 7DH
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+A:    MOV AX,DATA
+    MOV DS,AX
+    MOV DX,0606H
+    MOV AL,81H
+    OUT DX,AL 
+    LEA SI,LIST
+    MOV BX,0000H
+    MOV AL,11111110B  
+    MOV CX,6
+L1:    
+    MOV DX,0600H
+    OUT DX,AL
+    PUSH AX
+    MOV AX,[SI+BX]
+    MOV DX,0602H
+    OUT DX,AL
+	CALL DELAY
+	MOV DX,0600H;清屏
+	MOV AL,0FFH
+	OUT DX,AL
+	MOV DX,0602H
+	MOV AL,00H
+	OUT DX,AL
+    INC BX
+    POP AX
+    ROL AL,1
+    
+    LOOP L1  ;程序运行结束后灯就灭了？
+   	JMP A
+DELAY:
+    PUSH CX
+    MOV CX,0002H
+L3:
+    LOOP L3
+ 
+    POP CX
+    RET
+CODE ENDS
+    END START
+     
+    
+                      
+                      
+    
+    
+                 
+                  
+                
+           

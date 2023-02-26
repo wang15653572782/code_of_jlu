@@ -1,0 +1,45 @@
+assume cs:code,ds:data
+data segment
+
+	buf db 8 dup (0)
+data ends
+
+code segment
+
+start:
+mov ax,data
+mov ds,ax
+;lea bx,buf
+	mov dx, 0686h		;8255
+	mov al, 90h
+	out dx, al
+
+l:
+
+get:
+mov al,00h
+mov dx,0640h
+out dx,al
+call delay
+in al,dx
+cmp al,0h
+je get
+
+mov dx,0682h
+out dx,al
+jmp l
+
+mov ax,4c00h
+int 21h
+delay:
+	mov cx,0ffh
+	s_d:
+		push ax
+		pop ax
+		loop s_d
+	ret
+	 
+
+
+code ends
+end start

@@ -1,0 +1,95 @@
+;8251接IOY0口，所以数据口地址为0600H，控制口地址为0602H,因为A0接在了XA1上，所以保证第二位为奇数即为控制口地址
+;8254接IOY3口，使用计数器2，地址为06c4，控制寄存器地址为06c6H
+;波特因子n是接受/发送是要用n个接受/发送时钟才处理一个帧
+;波特率=8254的出入时钟频率/（8254的初值*波特因子）
+CODE SEGMENT
+	ASSUME CS:CODE
+START:
+;设置8254计数器的工作方式，让其工作在方式3下，产生方波
+	MOV DX,06C6H
+	MOV AL,0B6H
+	OUT DX,AL
+	MOV  DX,06C4H
+	MOV AL,10
+	OUT DX,AL
+	MOV AL,00H
+	OUT DX,AL
+
+
+;设置8251的方式字，命令控制字
+	MOV DX,0602H
+	MOV AL,0FFH
+	OUT DX,AL
+	MOV AL,4FH
+	OUT DX,AL;起作用的是4，进行8251的复位其余数随便
+
+;设置方式字,选波特率16，字长为8，用偶校验，一位的停止位
+	MOV DX,0602H
+	MOV AL,	7EH
+	OUT DX,AL
+;设置命令字
+	MOV AL,37H
+	OUT DX,AL
+
+;从3000读数，在4000写数
+	MOV SI,4000H
+	MOV DI,3000H
+	MOV CX,10
+A:	MOV AL,[DI]
+	MOV DX,0600H
+	OUT DX,AL
+	CALL DELAY
+	MOV DX,0602H
+L1:	IN AL,DX
+	AND AL,01H
+	JZ L1
+	;发送缓冲器为空，说明发送完了
+L2:	MOV DX,0602H
+	IN AL,DX
+	TEST AL,02H
+	JZ L2
+	;此时接受口已经接受到数据，还需要叫数据读出来
+	MOV DX,0600H
+	IN AL,DX
+	MOV [SI],AL
+	INC SI
+	INC DI
+	LOOP A
+	JMP FINAL
+DELAY:
+	PUSH CX
+	MOV CX,00FFH
+L3:	
+	LOOP L3
+	POP CX
+	RET
+FINAL:
+	MOV AH,4CH
+	INT 21H
+CODE ENDS
+	END START
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

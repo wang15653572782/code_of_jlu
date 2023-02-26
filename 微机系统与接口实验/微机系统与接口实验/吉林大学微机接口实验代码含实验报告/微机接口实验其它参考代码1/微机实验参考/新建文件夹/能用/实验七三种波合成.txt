@@ -1,0 +1,97 @@
+;ÈýÖÖ»ìºÏ
+code segment
+assume cs:code
+start:
+    mov dx,06c0h
+    mov al,00h
+    out dx,al
+    
+;sanjiao
+ 
+z1:mov al,00h
+   mov dx,0600h
+   mov cx,2
+z2:out dx,al
+   call delay
+   inc al
+
+   inc al
+   inc al
+   cmp al,0c0h
+   jb z2
+   
+   ;jnz z2
+
+z3:out dx,al
+   call delay
+   dec al
+
+   dec al
+   dec al
+   cmp al,00h
+   ja z3
+   ;jnz z3
+   loop z2
+   
+   
+   
+  ;fangbo 
+   mov cx,2
+   x1: mov al,00h
+    mov dx,0600h 
+    out dx,al
+    call delay1
+    
+    mov al,0c0h
+    out dx,al
+    call delay1
+    loop x1
+    
+ ;juchi
+ 
+	mov al,00h
+   mov dx,0600h
+   mov cx,2
+zz2:out dx,al
+   call delay
+   call delay
+   inc al
+   inc al
+	inc al
+   inc al
+   inc al
+   cmp al,0c0h
+   jb zz2
+   
+   ;jnz z2
+	
+	mov al,00h	
+	
+   ;jnz z3
+   loop zz2
+ 
+ 
+
+   jmp z1
+    
+DELAY:
+    PUSH CX
+    MOV  CX,02ffH
+AA0:
+    PUSH AX
+    POP  AX
+    LOOP AA0
+    POP  CX
+    RET
+    
+DELAY1:
+    PUSH CX
+    MOV  CX,0FFFFH
+BB0:
+    PUSH AX
+    POP  AX
+    LOOP BB0
+    POP  CX
+    RET
+code ends
+end start

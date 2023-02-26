@@ -1,0 +1,219 @@
+0-9循环：
+data segment
+table db 3fh,06h,5bh,4fh,66h,6dh,7dh,07h,7fh,6fh
+data ends
+code segment
+     assume cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov dx,0606h
+      mov al,81h
+      out dx,al
+      lea si,table
+      mov cx,10
+      mov bx,0
+a0:push cx
+   mov cx,6
+   mov al,0dfh
+a1:mov dx,0600h
+   out dx,al
+   ror al,1
+   push ax
+   mov al,[bx+si]
+   mov dx,0602h
+   out dx,al
+   pop ax
+   call delay
+   loop a1
+   pop cx
+   inc bx
+   loop a0
+   jmp start
+delay:push cx
+      mov cx,0ffffh
+      loop $
+      mov cx,0ffffh
+      loop $
+      mov cx,0ffffh
+      loop $
+      pop cx
+      ret
+code ends
+     end start
+
+1-6显示：
+data segment
+table db 06h,5bh,4fh,66h,6dh,7dh
+data ends
+code segment
+     assume cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov dx,0606h
+      mov al,81h
+      out dx,al
+      lea si,table
+a0:mov cx,6
+   mov bx,5
+   mov al,0dfh
+a1:mov dx,0600h
+   out dx,al
+   ror al,1
+   push ax
+   mov al,[bx+si]
+   mov dx,0602h
+   out dx,al
+   pop ax
+   call delay
+   dec bx
+   loop a1
+   jmp a0
+delay:push cx
+      mov cx,0ffh
+      loop $
+      pop cx
+      ret
+code ends
+     end start
+
+扩展1:
+data segment
+count db 6
+data ends
+code segment
+     assume cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov dx,0606h
+      mov al,81h
+      out dx,al
+      mov dx,0602h
+      mov al,3fh
+      out dx,al
+
+      mov ax,offset mir6
+      mov si,0038h
+      mov [es:si],ax
+      mov ax,cs
+      mov si,003ah
+      mov [es:si],ax
+      cli
+      mov al,11h
+      out 20h,al
+      mov al,08h
+      out 21h,al
+      mov al,04h
+      out 21h,al
+      mov al,01h
+      out 21h,al
+      mov al,3fh
+      out 21h,al
+      sti
+a0:cmp count,0
+   jnz a1
+   mov al,00h
+   mov dx,0602h
+   out dx,al
+   mov ah,4ch
+   int 21h
+a1:mov cx,0
+   mov cl,count
+   mov bx,0
+   mov al,0dfh
+a2:mov dx,0600h
+    out dx,al
+    ror al,1
+    push ax
+    mov al,3fh
+    mov dx,0602h
+    out dx,al
+    pop ax
+    call delay
+    loop a2
+    jmp a0
+delay:push cx
+      mov cx,0ffh
+      loop $
+      pop cx
+      ret
+mir6:dec count
+     push ax
+     mov al,20h
+     out 20h,al
+     pop ax
+     iret
+code ends
+     end start
+
+扩展2：
+data segment
+wei1 db 0
+shi db 0
+bai db 0
+table db 3fh,06h,5bh,4fh,66h,6dh,7dh,07h,7fh,6fh
+data ends
+code segment
+     assume cs:code,ds:data
+start:mov ax,data
+      mov ds,ax
+      mov dx,0606h
+      mov al,89h
+      out dx,al
+      lea si,table
+a0:mov dx,0604h
+   in al,dx
+   mov ah,00h
+   mov bl,0ah
+   div bl
+   mov wei1,ah
+   mov ah,00h
+   div bl
+   mov shi,ah
+   mov ah,00h
+   div bl
+   mov bai,ah
+   mov bx,0
+   mov al,0dfh
+   mov dx,0600h
+   out dx,al
+   mov bx,offset wei1
+   mov bx,[bx]
+   mov bh,00h
+   mov al,[bx+si]
+   mov dx,0602h
+   out dx,al
+   call delay
+   cmp shi,0
+   jnz a3
+   cmp bai,0
+   jz a1
+a3:mov al,0efh
+   mov dx,0600h
+   out dx,al
+   mov bx,offset shi
+   mov bx,[bx]
+   mov bh,00h
+   mov al,[bx+si]
+   mov dx,0602h
+   out dx,al
+   call delay
+a1:cmp bai,0
+   jz a2
+   mov al,0f7h
+   mov dx,0600h
+   out dx,al
+   mov bx,offset bai
+   mov bx,[bx]
+   mov bh,00h
+   mov al,[bx+si]
+   mov dx,0602h
+   out dx,al
+   call delay
+a2:jmp a0
+delay:push cx
+      mov cx,0fffh
+      loop $
+      pop cx
+      ret
+code ends
+     end start

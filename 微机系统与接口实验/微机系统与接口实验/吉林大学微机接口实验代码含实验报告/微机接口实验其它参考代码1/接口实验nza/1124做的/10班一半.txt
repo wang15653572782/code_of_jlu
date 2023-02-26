@@ -1,0 +1,147 @@
+PUBLIC COUNTNUM
+DATA SEGMENT
+    COUNTNUM DB 00H       ;记录中断按下开关的次数
+DATA ENDS
+
+CODE SEGMENT
+     ASSUME CS:CODE,DS:DATA
+	 
+START: MOV  DX,DATA
+       MOV  DS,DX
+       
+       PUSH AX
+       PUSH DX
+       MOV  AL,90H
+       MOV  DX,0646H
+       OUT  DX,AL            ;送控制字，A口输入，B口输出，C口输出
+       POP DX
+       POP AX      
+       
+;****************************MAIN FUNCTION****************************8      
+MAIN:  
+       MOV  DX,0606H         ;控制字-计数器1-方式三
+       MOV  AL,76H
+       OUT  DX,AL
+ 
+       
+       MOV  AL,00H
+       MOV  DX,0602H
+       OUT  DX,AL
+       
+       MOV  AL,48H
+       MOV  DX,0602H
+       OUT  DX,AL
+       
+       CALL DELAY
+       
+       MOV  DX,0640H
+       IN   AL,DX            ;A口析取开关输入
+      
+       CMP AL,01H
+       JZ  FIRST
+	   	   
+       JMP  MAIN
+
+;**************************SHOW OUT********************************8	   
+FIRST: 
+       MOV  DX,0640H
+       IN   AL,DX            ;A口析取开关输入
+       
+       CMP AL,00H
+       JZ SECOND
+       
+       MOV  DX,0606H      ;控制字-计数器1-方式三
+       MOV  AL,76H
+       OUT  DX,AL
+       
+       MOV  AL,00H        ;0.25S
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   
+	   MOV  AL,12H
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   CALL DELAY
+	   
+	   JMP FIRST
+	   
+SECOND:
+       MOV  DX,0640H
+       IN   AL,DX            ;A口析取开关输入
+       
+       CMP AL,01H
+       JZ THIRD
+       
+       MOV  DX,0606H      ;控制字-计数器1-方式三
+       MOV  AL,76H
+       OUT  DX,AL
+       
+       MOV  AL,00H        ;0.5S
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   MOV  AL,24H
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   CALL DELAY
+	   
+	   JMP SECOND
+	   	   	   
+THIRD: 
+       MOV  DX,0640H
+       IN   AL,DX            ;A口析取开关输入
+       
+       CMP AL,00H
+       JZ FOURTH
+       
+       MOV  DX,0606H      ;控制字-计数器1-方式三
+       MOV  AL,76H
+       OUT  DX,AL
+       
+       MOV  AL,00H        ;1S
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   MOV  AL,48H
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   
+	   CALL DELAY
+	   
+	   JMP  THIRD
+	   
+FOURTH:
+       MOV  DX,0640H
+       IN   AL,DX            ;A口析取开关输入
+       
+       CMP AL,01H
+       JZ  EXIT
+       
+       MOV  DX,0606H      ;控制字-计数器1-方式三
+       MOV  AL,76H
+       OUT  DX,AL
+       
+       MOV  AL,00H        ;2S
+	   MOV  DX,0602H
+	   OUT  DX,AL
+	   MOV  AL,90H
+	   MOV  DX,0602H
+	   OUT  DX,AL 	
+       CALL DELAY	 
+         
+	   JMP FOURTH
+
+;******************************延时**********************************************	 
+DELAY:
+     MOV  CX,0FFFFH
+    L1:LOOP L1
+       MOV  CX,0FFFFH
+    L2:LOOP L2
+       MOV  CX,0FFFFH
+    L3:LOOP L3
+    RET	
+    
+EXIT:
+      MOV  AH,4CH
+      INT 21H 
+      
+CODE ENDS
+     END START

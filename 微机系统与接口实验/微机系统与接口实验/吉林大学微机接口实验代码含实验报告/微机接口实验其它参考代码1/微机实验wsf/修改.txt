@@ -1,0 +1,133 @@
+;A口作为位选线，进行数码管的选择
+;B口进行数据的传输
+DATA SEGMENT
+    LIST:DB 03FH ,06H, 5BH, 4FH, 66H ,6DH, 7DH, 07H, 7FH, 6FH
+     VAL DB 00H
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:  
+MOV DX,0606H
+	MOV AL,36H
+	OUT DX,AL
+	MOV DX,0600H
+	MOV AL,0E8H
+	OUT DX,AL
+	MOV AL,03H
+	OUT DX,AL;选定计数器0持续产生方波，频率为1000Hz
+
+
+	MOV DX,0606H
+	MOV AL,76H
+	OUT DX,AL;选定计数器1工作在方式3,并且写入16位数字
+	MOV DX,0602H
+	MOV AL,0E8H 
+	OUT DX,AL
+	MOV AL,03H
+	OUT DX,AL
+;============================
+PUSH DS
+    MOV AX, 0000H
+    MOV DS, AX     ;手动指定用户程序区的起始位置，可以不指定，默认为0000H
+MOV AX, OFFSET MIR6  ;取中断服务程序的偏移地址
+    MOV SI, 0038H  ;中断号6的向量起始地址，见实验讲义P48
+    MOV [SI], AX   ;将服务程序地址填入中断向量(占两个字节)
+    MOV AX, CS     ;取段地址
+    MOV SI, 003AH  ;中断向量后移两个字节等待存入段地址
+    MOV [SI], AX   ;将段地址存入中断向量(占两个字节)
+    ;中断向量共四个字节大小，分别存服务程序入口地址和段地址
+    MOV AX, OFFSET MIR7
+    MOV SI, 003CH
+    MOV [SI], AX
+    MOV AX, CS
+    MOV SI, 003EH
+    MOV [SI], AX
+    ;填入MIR7的中断向量，同上
+    CLI            ;屏蔽所有可屏蔽中断，准备写入命令字
+    MOV AL, 11H    ;主片8255端口地址详见实验讲义P44
+    OUT 20H, AL    ;命令字ICW1，11H=00010001B
+    MOV AL, 08H
+    OUT 21H, AL    ;命令字ICW2，08H=00001000B
+    MOV AL, 04H
+    OUT 21H, AL    ;命令字ICW3，04H=00000100B
+    MOV AL, 01H
+    OUT 21H, AL    ;命令字ICW4，01H=00000001B
+    MOV AL, 3FH
+    OUT 21H, AL    ;命令字OCW1，3FH=00111111B
+POP DS
+;========================================
+
+    MOV AX,DATA
+    MOV DS,AX
+STI
+;==========================
+MAIN :
+CALL SHOW
+CALL DELAY
+JMP MAIN
+ SHOW:
+ ;初始化8255,8255接IOY0
+    MOV DX,0606H   
+    MOV AL,81H;将ABC口都设置为输出口 
+    OUT DX,AL    
+    LEA SI,LIST
+    LEA DI, VAL
+    MOV BL,[DI]
+    MOV BH,00H  
+    MOV CX,10
+L1: MOV AL,11011111B
+    PUSH CX
+    MOV CX,6
+L2: MOV DX,0600H   
+    OUT DX,AL;先让第六个显示数 
+    SAR AL,1
+    PUSH AX
+    MOV AL,[SI+BX];数字0
+    MOV DX,0602H
+    OUT DX,AL;显示数字0，持续一段时间
+    CALL DELAY;延时长一些
+    POP AX
+    LOOP L2   
+    POP CX
+    LOOP L1 
+    JMP START
+DELAY:
+    PUSH CX
+    MOV CX,0FFFFH
+L3:
+    LOOP L3
+    MOV CX,0FFFFH
+L4:
+    LOOP L4 
+    POP CX
+    RET
+MIR6 PROC NEAR:  
+PUSH SI
+PUSH AX
+   LEA SI VAL
+ MOV AL,[SI]
+CMP AL 06H
+JMP A1
+INC AL
+MOV [SI],AL
+ A1:   MOV AL, 20H    ;命令字OCW2，20H=00100000B，表示结束中断
+    OUT 20H, AL    ;写入OCW2，结束中断
+ 
+    MOV CX,0FFFFH  ;CX为计数寄存器，确定循环次数
+L1:
+    LOOP L1
+POP SI
+POP AX
+    IRET
+    ;中断返回指令，回到主程序发生中断的位置
+MIR6 ENDP
+CODE ENDS
+    END START
+                      
+                      
+    
+    
+                 
+                  
+                
+           

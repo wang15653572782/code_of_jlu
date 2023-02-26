@@ -1,0 +1,119 @@
+;中断服务程序必须写在DS为0000,：0038的地址中，所以要是有数据段的话就要把在设置完中断向量之后再 MOV AX,DATA;MOV DS,AX
+DATA SEGMENT
+    KK1 DB 0
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE, DS:DATA
+START:  
+
+    MOV AX, OFFSET MIR6  ;取中断服务程序的偏移地址
+    MOV SI, 0038H  ;中断号6的向量起始地址，见实验讲义P48
+    MOV [SI], AX   ;将服务程序地址填入中断向量(占两个字节)
+    MOV AX, CS     ;取段地址
+    MOV SI, 003AH  ;中断向量后移两个字节等待存入段地址
+    MOV [SI], AX   ;将段地址存入中断向量(占两个字节)
+    ;中断向量共四个字节大小，分别存服务程序入口地址和段地址
+    
+    CLI            ;屏蔽所有可屏蔽中断，准备写入命令字
+    MOV AL, 11H    ;主片8255端口地址详见实验讲义P44
+    OUT 20H, AL    ;命令字ICW1，11H=00010001B
+    MOV AL, 08H
+    OUT 21H, AL    ;命令字ICW2，08H=00001000B
+    MOV AL, 04H
+    OUT 21H, AL    ;命令字ICW3，04H=00000100B
+    MOV AL, 01H
+    OUT 21H, AL    ;命令字ICW4，01H=00000001B
+    MOV AL, 3FH
+    OUT 21H, AL    ;命令字OCW1，3FH=00111111B
+    STI 
+    MOV AX,DATA
+    MOV DS,AX       
+    MOV DX,0606H  ;千万别忘记写8255的控制字
+    MOV AL,81H
+    OUT DX,AL
+    MOV DX,0600H ;初始时选定全部的数码管显示全部为0
+    MOV AL,00H
+    OUT DX,AL
+    MOV DX,0602H
+    MOV AL,3FH
+    OUT DX,AL
+    MOV BX,0000H
+MAIN:
+    LEA DI,KK1
+    MOV BX,[DI]
+    CMP BL,06H
+    JA EXIT
+    CALL LED
+    JMP MAIN
+EXIT:  ;计数>6，程序结束
+
+    MOV AH,4CH
+    INT 21H
+LED:
+    PUSH  DI
+    PUSH CX
+    PUSH AX
+    MOV CH,00H  ;初始时CH并不是00H
+    LEA DI,KK1
+    MOV CX,[DI] 
+    MOV AX,06H
+    SUB AX,CX
+    MOV CX,AX
+    CMP CX,0006H
+    JE L2
+    CMP CX,0000H
+    JE L2;按了6次，不显示了
+    MOV AL,11111110B;从最左边开始，第一个数码管
+L1:  ;延时短一些，看起来像静止的
+    MOV DX,0600H
+    OUT DX,AL
+    ROL AL,1
+    PUSH AX
+    MOV AL,3FH
+    MOV DX,0602H
+    OUT DX,AL
+    CALL DELAY
+    CALL CLEAR
+    POP AX
+    LOOP L1 
+L2:    
+    POP AX
+    POP CX
+    POP DI
+    RET
+    
+    
+MIR6:
+    STI      ;KK1每按一次计数就增加1
+    PUSH DI
+    PUSH AX
+    LEA DI,KK1
+    MOV AX,[DI]
+    INC AX
+    MOV [DI],AX 
+    MOV AL,20H
+    OUT 20H,AL
+    POP AX
+    POP DI
+    IRET
+DELAY:
+    PUSH CX
+    MOV CX,0002H
+L3:
+    LOOP L3
+    POP CX
+    RET
+CLEAR:   
+    PUSH DX
+    PUSH AX
+    MOV DX,0600H
+    MOV AL,0FFH
+    OUT DX,AL
+    MOV DX,0602H
+    MOV AL,00H
+    OUT DX,AL   
+    POP AX
+    POP DX
+    RET
+CODE ENDS
+    END START

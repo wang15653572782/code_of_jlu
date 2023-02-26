@@ -1,0 +1,96 @@
+CODE SEGMENT
+	 ASSUME CS:CODE
+START:MOV DX,0646H
+	  MOV AL,80H     ;控制字格式80H，PB口输出0FFH
+	  OUT DX,AL
+
+	
+	CLI                 ;将所有可屏蔽中断禁止
+;写入初始化命令字，ICW3主片已被初始化
+
+	MOV AL,1BH          ;ICW1
+	MOV DX,0020H
+	OUT DX,AL
+
+	MOV AL,08H          ;ICW2
+	MOV DX,0021H
+	OUT DX,AL
+
+	MOV AL,07H          ;ICW4
+	MOV DX,0021H
+	OUT DX,AL
+
+	MOV AL,2FH          ;OCW1
+	MOV DX,0021H
+	OUT DX,AL
+	STI	                 ;允许中断
+	
+;中断向量设置程序
+	CLI              ;IR6
+	MOV AX,0
+	MOV ES,AX    ;中断向量表段地址
+	MOV DI,38H   ;中断向量表偏移地址
+	MOV AX,OFFSET INTOE ;中断服务程序偏移地址
+	CLD          ;清除方向的标志
+	STOSW       ;保存字段，把AX内容存储到EDI指向的内存单元中
+	MOV AX,SEG INTOE    ;中断服务程序段地址
+	STOSW     
+	STI
+	
+	CLI            ;IR7
+	MOV AX,0
+	MOV ES,AX
+	MOV DI,3CH
+	MOV AX,OFFSET INTOF
+	CLD
+	STOSW
+	MOV AX,SEG INTOF
+	STOSW
+	STI
+	  
+LL1:	MOV AL,0FFH              ;所有灯亮
+	MOV DX,0642H
+	OUT DX,AL
+	JMP LL1
+	MOV AH,4CH
+	INT 21H
+
+
+INTOE PROC
+	PUSH AX
+	PUSH DX
+	MOV AL,0FH
+	MOV DX,0642H
+	OUT DX,AL
+	CALL DELAY
+	POP DX
+	POP AX
+	IRET
+INTOE ENDP
+
+INTOF PROC
+	PUSH AX
+	PUSH DX
+	MOV AL,0FH
+	MOV DX,0642H
+	OUT DX,AL
+	CALL DELAY
+	POP DX
+	POP AX
+	IRET
+INTOF ENDP  
+
+DELAY PROC
+	PUSH CX
+	PUSH BX
+	MOV CX,0FFH
+LL3: MOV BX,0FFFH
+LL2:	DEC BX
+	JNZ LL2
+	LOOP LL3
+	POP BX
+	POP CX
+	RET
+DELAY ENDP
+CODE ENDS
+	 END START

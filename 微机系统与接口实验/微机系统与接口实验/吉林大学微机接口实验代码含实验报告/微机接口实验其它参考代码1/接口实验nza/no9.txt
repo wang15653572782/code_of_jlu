@@ -1,0 +1,136 @@
+DATA SEGMENT
+
+NUMBER DB 00H,00H,00H,00H,00H,00H
+
+LEDTAB DB  3FH	;0
+       DB  06H	;1
+       DB  5BH	;2
+       DB  4FH	;3
+       DB  66H	;4
+       DB  6DH	;5
+       DB  7DH	;6
+       DB  07H	;7
+       DB  7FH	;8
+       DB  6FH	;9
+       DB  77H	;A
+       DB  7CH  ;B
+       DB  39H	;C
+       DB  5EH	;D
+       DB  79H	;E
+       DB  71H	;F
+DATA ENDS
+CODE  SEGMENT
+      ASSUME CS:CODE,DS:DATA
+START:
+      MOV AX,DATA
+      MOV DS,AX
+      
+      MOV   AL,81H       
+      MOV   DX,0606H
+      OUT   DX,AL
+      LEA   SI,NUMBER
+      LEA   DI,LEDTAB
+
+X1:   CALL  MDISPLAY   	
+
+X7:   MOV   AL,00H
+      MOV   DX,0600H
+      OUT   DX,AL 
+      MOV   DX,0604H
+      IN    AL,DX       
+      AND   AL,0FH      
+      CMP   AL,0FH
+      JZ    X1		  
+
+      MOV   BX,0       
+      MOV   AH,0FEH	 
+X2:   MOV   AL,AH
+      MOV   DX,0600H 
+      OUT   DX,AL
+      MOV   DX,0604H
+      IN    AL,DX
+      AND   AL,0FH
+      CMP   AL,0FH
+      JNZ   X3		
+      ROL   AH,1	 
+      INC   BX	    
+      CMP   AH,0EFH  
+      JNZ   X2		 
+      JMP   X7		
+
+X3:   CMP   AL,0EH      
+      JZ    X4		    
+      ADD   BX,4	    
+      CMP   AL,0DH     
+      JZ    X4		    
+      ADD   BX,4	    
+      CMP   AL,0BH    
+      JZ    X4		
+      ADD   BX,4	    
+      CMP   AL,07H     
+      JZ    X4	    	
+      
+X4:   MOV   BP,5
+X5:   MOV   AL,DS:[SI+BP-1]   
+      MOV   DS:[SI+BP],AL
+      DEC   BP
+      JNZ   X5
+
+      MOV   AL,DS:[DI+BX]      
+      MOV   DS:[SI],AL	       
+
+X6:   CALL  MDISPLAY	       
+
+      MOV   AL,0               ;防止按键时间过长
+      MOV   DX,0600H
+      OUT   DX,AL
+      MOV   DX,0604H
+      IN    AL,DX
+      AND   AL,0FH
+      CMP   AL,0FH
+      JNZ   X6
+      JMP   X7
+
+MDISPLAY:
+      PUSH  AX
+      PUSH  BX
+      PUSH  CX
+
+      MOV   BX,0
+      MOV   AH,0FEH            ;1101 1111B   
+Z1:   MOV   AL,AH
+      MOV   DX,0600H
+      OUT   DX,AL ;A 输出位选
+           
+  	  MOV   AL,DS:[SI+BX]	   ;取数的段码,BX为相对于段码起始地址的偏移
+      MOV   DX,0602H
+      OUT   DX,AL	           ;送段选码，b口
+      ROL   AH,1 
+      INC   BX
+      
+      MOV   CX,30H
+Z2:
+      LOOP  Z2  ;延时
+      MOV   AL,00H
+      MOV   DX,0602H 
+      OUT   DX,AL            ;消影
+      CMP   AH,07FH          ;  00111111B
+      JNZ   Z1
+
+      POP   CX
+      POP   BX
+      POP   AX
+      RET
+
+
+DELAY:
+      PUSH CX
+      MOV  CX,0FF8H
+LLL:  LOOP LLL
+      POP  CX
+      RET
+
+
+CODE  ENDS
+	END START     
+

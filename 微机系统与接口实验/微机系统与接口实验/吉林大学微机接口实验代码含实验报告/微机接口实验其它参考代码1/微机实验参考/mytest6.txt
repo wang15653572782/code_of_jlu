@@ -1,0 +1,70 @@
+方式0
+code segment
+     assume cs:code
+start:
+      mov dx,0606h
+      mov al,70h
+      out dx,al
+      mov dx,0602h
+      mov al,00h
+      out dx,al
+      mov al,48h
+      out dx,al
+aa1:jmp aa1
+code ends
+     end start
+
+方式1
+code segment
+     assume cs:code
+start:
+      mov dx,0606h
+      mov al,72h
+      out dx,al
+      mov dx,0602h
+      mov al,00h
+      out dx,al
+      mov al,24h
+      out dx,al
+a1:jmp a1
+code ends
+     end start
+
+方式2
+code segment
+     assume cs:code
+start:mov dx,0606h
+      mov al,36h
+      out dx,al
+      mov dx,0600h
+      mov al,00
+      out dx,al
+      mov al,05
+      out dx,al
+
+      mov dx,0606h
+      mov al,74h
+      out dx,al
+      mov dx,0602h
+      mov al,10
+      out dx,al
+      mov al,00
+      out dx,al
+a0:jmp a0
+code ends
+     end start
+
+方式3
+code segment
+     assume cs:code
+start:mov dx,0606h
+      mov al,76h
+      out dx,al
+      mov dx,0602h
+      mov al,00h
+      out dx,al
+      mov al,48h
+      out dx,al
+a1:jmp a1
+code ends
+     end start

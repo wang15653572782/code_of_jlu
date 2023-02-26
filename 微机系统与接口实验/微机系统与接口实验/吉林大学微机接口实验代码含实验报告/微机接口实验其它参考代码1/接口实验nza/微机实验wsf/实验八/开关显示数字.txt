@@ -1,0 +1,94 @@
+;DIV除法，被除数在AX中，除完之后，AH中保存余数，AL中保存商
+DATA SEGMENT 
+    LIST DB 03FH ,06H, 5BH, 4FH, 66H ,6DH, 7DH, 07H, 7FH, 6FH
+    LAST DB 00H
+    MIDDLE  DB 00H
+    FIRST DB 00H
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START: 
+    MOV AX,DATA
+    MOV DS,AX
+    ;设置8255，使得C口执行输入，读取kk的数值
+    ;8255接IOY0
+    MOV DX,0606H
+    MOV AL,89H
+    OUT DX,AL
+L1: 
+    MOV DX,0604H
+    IN AL,DX ;此时kk的数字存到了al中
+    MOV AH,00H
+    MOV BL,0AH
+    DIV BL;除完之后，AH中是个位数，AL保存十位和百位
+    LEA DI,LAST
+    MOV [DI],AH
+    MOV AH,00H
+    DIV BL; 除完之后，AH中是十位数，AL保存百位
+    LEA DI,MIDDLE
+    MOV [DI],AH
+    LEA DI,FIRST
+    MOV [DI],AL
+    
+    
+    MOV AL,11011111B;设置最右边的数码管6显示个位
+    MOV DX,0600H
+    OUT DX,AL
+    MOV DX,0602H
+    LEA DI,LAST
+    MOV BL,[DI]
+    MOV BH,00H 
+    LEA DI,LIST  ;还要对应于数码管显示的字符的编号
+    MOV AL,[BX+DI]
+    OUT DX,AL 
+    CALL DELAY
+    CALL CLEAR
+    MOV AL,11101111B ;设置最右边的数码管5显示十位
+    MOV DX,0600H
+    OUT DX,AL
+    MOV DX,0602H
+    LEA DI,MIDDLE
+    MOV BL,[DI]
+    MOV BH,00H 
+    LEA DI,LIST
+    MOV AL,[DI+BX]
+    OUT DX,AL 
+    CALL DELAY
+    CALL CLEAR  
+    MOV AL,11110111B ;设置最右边的数码管4显示百位
+    MOV DX,0600H
+    OUT DX,AL
+    MOV DX,0602H
+    LEA DI,FIRST
+    MOV BL,[DI]
+    MOV BH,00H
+    LEA DI,LIST
+    MOV AL,[DI+BX]
+    OUT DX,AL 
+    CALL DELAY
+    CALL CLEAR   
+    JMP L1
+    
+CLEAR:
+	PUSH DX
+	PUSH AX
+	MOV DX,0600H
+	MOV AL,0FFH
+	OUT DX,AL
+	MOV DX,0602H
+	MOV AL,00H
+	OUT DX,AL
+	POP AX
+	POP DX  
+	RET 
+DELAY:
+    PUSH CX
+    MOV CX,00FFH
+L2:
+    LOOP L2
+    POP CX
+    RET
+CODE ENDS
+    END START
+      
+    

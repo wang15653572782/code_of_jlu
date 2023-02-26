@@ -1,0 +1,33 @@
+CODE SEGMENT
+     ASSUME CS:CODE
+     
+START:MOV AL,90H
+      MOV DX,0686H
+      OUT DX,AL     
+      
+LL0: MOV AL,00H
+    MOV DX,0640H
+    OUT DX,AL        
+    
+LL1: MOV DX,0680H
+    IN AL,DX
+    TEST AL,01H
+    JNZ LL1
+    
+LL2: 
+    IN AL,DX
+    TEST AL,01H
+    JZ LL2
+   
+A1:MOV DX,0640H
+   IN AL,DX
+   MOV DX,0682H
+   OUT DX,AL
+   
+   JMP LL0
+   
+   MOV AH,4CH
+   INT 21H
+   
+CODE ENDS
+     END START

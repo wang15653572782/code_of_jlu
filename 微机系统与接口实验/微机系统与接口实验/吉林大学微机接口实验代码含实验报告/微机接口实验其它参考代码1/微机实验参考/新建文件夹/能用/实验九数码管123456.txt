@@ -1,0 +1,39 @@
+CODE	SEGMENT
+ASSUME CS:CODE
+
+START:	MOV AL,80H			;要求2
+	    MOV DX,0606H
+	    OUT DX,AL			;送8255控制字
+	
+	    XOR BX,BX      
+	    LEA SI,LEDTAB
+     	MOV AH,0FEH
+	
+BBB10:  MOV BX,1	        ;从1开始显示
+
+        XOR CX,CX
+        MOV CX,8
+BBB11:  MOV AL,AH      
+	    MOV DX,0600H
+        OUT DX,AL      
+        MOV AL,[SI+BX]
+        MOV DX,0602H
+        OUT DX,AL      
+                       
+        PUSH CX
+        MOV CX,02FFH
+DELAY:  LOOP DELAY
+
+        XOR CX,CX
+        POP CX        
+        ROL AH,1      
+        ADD BX,1
+        LOOP BBB11
+
+BBB12:
+       JMP start
+
+	
+LEDTAB:	DB 3FH,06H,5BH,4FH,66H,6DH,7DH,07H,7FH,6FH	;0——9的段码
+CODE	ENDS
+END	Start

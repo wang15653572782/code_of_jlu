@@ -1,0 +1,103 @@
+MY8255_A EQU 0600H 
+MY8255_B EQU 0602H 
+MY8255_C EQU 0604H 
+MY8255_MODE EQU 0606H 
+A8254 EQU 06C0H 
+B8254 EQU 06C2H
+C8254 EQU 06C4H
+CON8254 EQU 06C6H
+ 
+SSTACK SEGMENT STACK 
+    DW 32 DUP(?)
+SSTACK ENDS
+
+DATA SEGMENT
+     MSEC DW 0
+     MIN  DW 0
+DATA ENDS
+
+CODE SEGMENT 
+    ASSUME CS:CODE,DS:DATA
+    
+START: 
+    PUSH DS
+    MOV AX, 0000H
+    MOV DS, AX
+    MOV AX, OFFSET MIR7          ;取中断入口地址
+    MOV SI, 003CH                ;中断矢量地址
+    MOV [SI], AX                 ;填IRQ7的偏移矢量确定地址
+    MOV AX, CS                   ;段地址
+    MOV SI, 003EH
+    MOV [SI], AX                 ;填IRQ7的段地址矢量
+    CLI
+    POP DS            
+    ;初始化主片8255
+    MOV DX,MY8255_MODE
+    MOV AL,81H
+    OUT DX,AL    
+    ;初始化主片8254
+    MOV DX,CON8254
+    MOV AL,36H 
+    OUT DX,AL
+    MOV DX,A8254 
+    MOV AL,0E8H
+    OUT DX,AL
+    MOV AL,03H
+    OUT DX,AL   
+    
+    
+    
+      
+    ;初始化主片8259
+    MOV AL, 11H
+    OUT 20H, AL                  ;ICW1
+    MOV AL, 08H
+    OUT 21H, AL                  ;ICW2
+    MOV AL, 04H
+    OUT 21H, AL                  ;ICW3
+    MOV AL, 01H
+    OUT 21H, AL                  ;ICW4
+    MOV AL, 6FH        
+    OUT 21H, AL                  ;OCW1
+    STI
+MAIN:
+          MOV AX,0
+          DEC AX
+          INC AX
+          JMP MAIN    
+ 
+MIR7:
+    STI 
+    PUSH AX
+    PUSH SI
+    MOV AX,MSEC 
+    INC AX 
+    MOV MSEC,AX
+    CMP AX,1000
+    JB MRET 
+ 
+    MOV AX,0
+    MOV MSEC,AX
+ 
+    MOV DX,MY8255_B
+    MOV AX,MIN
+    ROR AL,1
+    ADD AL,80H
+    OUT DX,AL
+    CMP AL,0FFH
+    JZ  AA1
+    MOV MIN,AX
+    JMP MRET
+AA1:MOV AX,0
+    MOV MIN,AX
+    JMP MRET
+    
+MRET:
+    MOV AL, 20H
+    OUT 20H, AL                     ;中断结束命令
+    POP SI
+    POP AX
+    IRET
+    
+ CODE ENDS
+    END START

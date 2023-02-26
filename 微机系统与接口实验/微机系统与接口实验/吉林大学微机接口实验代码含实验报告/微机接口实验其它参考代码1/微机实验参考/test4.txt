@@ -1,0 +1,62 @@
+code segment
+     assume cs:code
+start:mov al,80h
+      mov dx,0686h
+      out dx,al
+a0:mov al,00h
+   mov dx,0640h
+   out dx,al
+   mov cx,0ffffh
+x:loop x
+a1:in al,dx
+   mov dx,0683h
+   out dx,al
+   jmp a0
+   mov ah,4ch
+   int 21h
+code ends
+     end start
+
+code segment
+assume cs:code
+start:mov al,90h;10010000
+      mov dx,0686h
+      out dx,al
+a0:mov al,00h
+   mov dx,0640h
+   out dx,al
+   mov dx,0680h
+a1:in al,dx
+   cmp al,01h
+   jne a1
+a2:in al,dx
+   test al,01h
+   jz a2
+   mov dx,0640h
+   in al,dx
+   mov dx,0682h
+   out dx,al
+   jmp a0
+   mov ah,4ch
+   int 21h
+code ends
+     end start
+
+code segment
+     assume cs:code
+start:mov al,80h
+      mov dx,0686h
+      out dx,al
+a0:mov al,00h
+   mov dx,0640h
+   out dx,al
+   mov cx,0ffffh
+a1:loop a1
+   in al,dx
+   mov dx,0682h
+   out dx,al
+   jmp a0
+   mov ah,4ch
+   int 21h
+code ends
+     end start

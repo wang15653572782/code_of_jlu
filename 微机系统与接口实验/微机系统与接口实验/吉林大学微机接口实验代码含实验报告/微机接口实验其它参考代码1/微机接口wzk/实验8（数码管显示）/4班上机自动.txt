@@ -1,0 +1,57 @@
+;A口作为位选线，进行数码管的选择
+;B口进行数据的传输
+DATA SEGMENT
+    LIST:DB 80H,77H,7CH,39H,51H,79H,71H,3DH
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:  
+    MOV AX,DATA
+    MOV DS,AX
+    ;初始化8255,8255接IOY0
+    MOV DX,0606H   
+    MOV AL,81H;将ABC口都设置为输出口 
+    OUT DX,AL    
+    MOV BX,0000H
+    LEA SI,LIST  
+    MOV CX,8
+L1: MOV AL,11011111B
+    PUSH CX
+    ;MOV CX,6
+L2: MOV DX,0600H   
+    OUT DX,AL;先让第六个显示数 
+    ;SAR AL,1
+    PUSH AX
+    MOV AL,[SI+BX];数字0
+    MOV DX,0602H
+    OUT DX,AL;显示数字0，持续一段时间
+    CALL DELAY;延时长一些
+    POP AX
+    LOOP L2 
+    INC BX  
+    POP CX
+    LOOP L1 
+    JMP START
+DELAY:
+    PUSH CX
+    MOV CX,0FFFFH
+L3:
+    LOOP L3
+    MOV CX,0FFFFH
+L4:
+    LOOP L4 
+     MOV CX,0FFFFH
+L5:
+    LOOP L5
+    POP CX
+    RET
+CODE ENDS
+    END START
+                      
+                      
+    
+    
+                 
+                  
+                
+           

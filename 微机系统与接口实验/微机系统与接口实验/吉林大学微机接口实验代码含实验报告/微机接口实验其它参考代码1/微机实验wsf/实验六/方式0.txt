@@ -1,0 +1,18 @@
+CODE SEGMENT
+	ASSUME CS:CODE
+START:
+;将CLK1直接接在CLK上
+
+;将8254cs接IOY0，地址是0600H
+L2:	MOV DX,0606H
+	MOV AL,70H
+	OUT DX,AL;选定计数器1工作在方式0,并且写入16位数字
+	MOV DX,0602H
+	MOV AL,0FFH
+	OUT DX,AL
+	MOV AL,0FFH
+	OUT DX,AL
+	
+;刚开始是高电平的，但是一旦装数后就变为低电平，所以开始时gate置为低，一旦gate为高，则输出为高，并且一直保持高电平
+CODE ENDS
+	END START

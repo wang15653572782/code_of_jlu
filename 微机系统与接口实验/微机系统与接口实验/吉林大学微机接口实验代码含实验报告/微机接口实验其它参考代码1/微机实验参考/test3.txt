@@ -1,0 +1,164 @@
+stack segment
+sta db 50 dup(?)
+top equ length sta
+stack ends
+code segment
+     assume cs:code,ss:stack
+start:mov ax,top
+      mov sp,ax
+
+      push ds
+      mov ax,0000h
+      mov ds,ax
+      mov ax,offset ir6
+      add ax,0000h
+      mov si,38h
+      mov [si],ax
+      mov ax,cs
+      mov si,3ah
+      mov [si],ax
+
+      mov ax,0000h
+      mov ds,ax
+      mov ax,offset ir7
+      add ax,0000h
+      mov si,3ch
+      mov [si],ax
+      mov ax,cs
+      mov si,3eh
+      mov [si],ax
+      pop ds
+
+      cli
+      mov dx,0020h
+      mov al,13h
+      out dx,al
+      mov dx,0021h
+      mov al,08h
+      out dx,al
+      mov al,01h
+      out dx,al
+      mov al,3fh
+      out dx,al
+      mov al,20h
+      mov dx,0020h
+      out dx,al
+      sti
+
+      mov dx,0646h
+      mov al,80h
+      out dx,al
+a1:mov dx,0642h
+   mov al,0ffh
+   out dx,al
+   jmp a1
+
+ir6:mov al,0fh
+    mov dx,0642h
+    out dx,al
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov dx,0020h
+    mov al,20h
+    out dx,al
+    iret
+
+ir7:mov al,0f0h
+    mov dx,0642h
+    out dx,al
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov cx,0ffffh
+    loop $
+    mov dx,0020h
+    mov al,20h
+    out dx,al
+    iret
+code ends
+     end start
+
+
+stack segment
+sta db 50 dup(?)
+top equ length sta
+stack ends
+code segment
+     assume cs:code,ss:stack
+start:mov ax,top
+      mov sp,ax
+
+      push ds
+      mov ax,0000h
+      mov ds,ax
+      mov ax,offset ir6
+      add ax,0000h
+      mov si,38h
+      mov [si],ax
+      mov ax,cs
+      mov si,3ah
+      mov [si],ax
+
+      mov ax,0000h
+      mov ds,ax
+      mov ax,offset ir7
+      add ax,0000h
+      mov si,3ch
+      mov [si],ax
+      mov ax,cs
+      mov si,3eh
+      mov [si],ax
+      pop ds
+
+      cli
+      mov dx,0020h
+      mov al,13h
+      out dx,al
+      mov dx,0021h
+      mov al,08h
+      out dx,al
+      mov al,03h
+      out dx,al
+      mov al,3fh
+      out dx,al
+      sti
+
+      mov dx,0646h
+      mov al,80h
+      out dx,al
+
+a1:;sti
+   cmp ah,0
+   jz a2
+   cmp al,01h
+   jz a3
+   shr al,1
+   jmp a3
+a2:cmp al,80h
+   jz a3
+   shl al,1
+a3:mov dx,0642h
+   out dx,al
+   mov cx,0ffffh
+   loop $
+   mov cx,0ffffh
+   loop $
+   mov cx,0ffffh
+   loop $
+   jmp a1
+ir6:mov ah,1
+    iret
+
+ir7:mov ah,0
+    iret
+code ends
+     end start

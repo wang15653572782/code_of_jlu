@@ -1,0 +1,70 @@
+stack segment stack
+      dw 16 dup(0)
+stack ends
+code segment
+start proc far
+      assume cs:code
+      mov ax,8000h
+      mov ds,ax
+aa0:mov si,0000h
+    mov cx,16
+    mov ax,0000h
+aa1:mov [si],ax
+    inc ax
+    inc si
+    inc si
+    loop aa1
+    mov ah,4ch
+    int 21h
+    start endp
+code ends
+end start 
+
+
+stack segment stack
+      dw 16 dup(0)
+stack ends
+code segment
+start proc far
+      assume cs:code
+      mov ax,8000h
+      mov ds,ax
+aa0:mov si,0000h
+    mov cx,16
+    mov ax,0000h
+    mov [si],ax
+    inc si
+    inc ah
+aa1:mov [si],ax
+    inc ah
+    inc si
+    inc si
+    loop aa1
+    mov ah,4ch
+    int 21h
+    start endp
+code ends
+end start 
+
+stack segment stack
+      dw 16 dup(0)
+stack ends
+code segment
+start proc far
+      assume cs:code
+      mov ax,8000h
+      mov ds,ax
+aa0:mov si,0000h
+    mov cx,16
+    mov ax,0000h
+aa1:mov [si],al
+    inc si
+    mov [si],ah
+    inc ax
+    inc si
+    loop aa1
+    mov ah,4ch
+    int 21h
+    start endp
+code ends
+end start 

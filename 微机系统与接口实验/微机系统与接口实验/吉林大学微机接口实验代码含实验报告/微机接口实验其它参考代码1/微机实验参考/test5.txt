@@ -1,0 +1,94 @@
+code segment
+     assume cs:code
+main proc far
+m0:call juchi
+   call fangbo
+   call sanjiao
+   call jieti
+   jmp m0
+   mov ah,4ch
+   int 21h
+
+juchi proc near
+   mov cx,2
+j0:mov al,00h
+   mov dx,0600h
+   out dx,al
+j1:inc al
+   out dx,al
+   push cx
+   mov cx,0ffh
+j2:loop j2
+   pop cx
+   jnz j1
+   loop j0
+   ret
+juchi endp
+
+fangbo proc near
+   mov cx,2
+a1:mov al,00h
+   mov dx,0600h
+   out dx,al
+   push cx
+   mov cx,0ffffh
+a2:loop a2
+   mov al,0ffh
+   out dx,al
+   mov cx,0ffffh
+a3:loop a3
+   pop cx
+   loop a1   
+   ret
+fangbo endp
+
+sanjiao proc near
+   mov cx,2
+s0:mov al,00h
+   mov dx,0600h
+s1:out dx,al
+   push cx
+   mov cx,0ffh
+s2:loop s2
+   pop cx
+   inc al
+   jnz s1
+   dec al
+   dec al
+s3:out dx,al
+   push cx
+   mov cx,0ffh
+s4:loop s4
+   pop cx
+   dec al
+   jnz s3
+   loop s0
+   ret
+sanjiao endp
+
+jieti proc near
+   mov bl,2
+   mov ax,0ffh
+   mov dl,5
+   div dl
+   mov ah,al
+t0:mov al,00h
+   mov dx,0600h
+   out dx,al
+   mov cx,0ffffh
+   loop $
+   mov bh,5
+t1:add al,ah
+   mov dx,0600h
+   out dx,al
+   mov cx,0ffffh
+   loop $
+   dec bh
+   jnz t1
+t2:dec bl
+   jnz t0
+   ret
+jieti endp
+main endp
+code ends
+     end

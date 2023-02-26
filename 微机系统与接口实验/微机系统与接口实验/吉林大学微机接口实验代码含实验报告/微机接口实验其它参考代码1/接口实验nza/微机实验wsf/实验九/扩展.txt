@@ -1,0 +1,161 @@
+;8255的A口低四位是作为行扫描的接口，同时也是数码管的位选线
+;8255的C口低四位是作为列输入的
+;8255接IOY0
+DATA SEGMENT
+    LIST DB 3FH ,06H, 5BH, 4FH, 66H ,6DH, 7DH, 07H, 7FH, 6FH,77H,7CH,39H,5EH,79H,71H
+    TABLE :
+    	DB  0EEH,0DEH,0BEH,7EH
+        DB  0EDH,0DDH,0BDH,7DH
+        DB  0EBH,0DBH,0BBH,7BH
+        DB  0E7H,0D7H,0B7H,77H   
+    SHUMA DB 00H 11011111B;第一位设置成标志位，0的时候向左走，1的时候向右走，第二位是即将显示的数码管的号初始时在6号     
+DATA ENDS
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:  
+    MOV AX,DATA
+    MOV DS,AX
+    MOV DX,0606H
+    MOV AL,81H
+    OUT DX,AL;设置8255控制字，使得A,B口和C口第四位进行输入
+    MOV DX,0600H
+    MOV AL,00H
+    OUT DX,AL
+    MOV DX,0602H
+    MOV AL,00H
+    OUT DX,AL;开始时数码管不显示 
+L1: MOV DX,0600H
+    MOV AL,00H 
+    OUT DX,AL
+    MOV DX,0604H
+    IN AL,DX
+    AND AL,0FH
+    CMP AL,0FH
+    JZ L1;按键全部为高电平，没有键按下
+    CALL DELAY;消除前沿抖动
+    MOV DX,0600H
+    MOV AL,00H    ;进行行扫描确定列数
+    OUT DX,AL
+    MOV DX,0604H
+    IN AL,DX
+    AND AL,0FH
+    CMP AL,0FH
+    JZ L1;消抖前的按键是由于干扰,重新查询
+    ;到此说明有按键输入
+    MOV AH,11111110B
+    MOV DX,0600H
+    MOV CX,04H
+L3: 
+    MOV AL,AH
+    MOV DX,0600H
+    OUT DX,AL   
+    MOV DX,0604H
+    IN AL,DX
+    AND AL,0FH
+    CMP AL,0FH
+    JNZ L2;L2是行扫描成功，确定了行数
+    ROL AH,1
+    LOOP L3
+    JMP L1;行扫描没成功的处理------------------------------
+L2:
+    MOV CL,4
+    SHL AH,CL;AH的高四位是行数
+    OR AL,AH;此时AL的高四位为行数，低四位为列数
+    LEA SI,TABLE
+    MOV BL,00H 
+    MOV BH,00H
+L5: CMP AL,[SI+BX]
+    JZ L4;确定了AL代表的是哪个键码，值在BL中，进行数码管显示
+    INC BL
+    CMP BL,10H
+    JNZ L5;键码已经小于16个
+    JMP L1;键码值已经大于16个了，但还是没找到，放弃本次显示，重新按键输入
+    
+L4:;此时键码的偏移量已经在BL中了
+    MOV BH,00H
+    LEA  SI,LIST
+    MOV AL,[SI+BX] ;AL里面已经放了数码管能显示的值 
+    CMP AL,71H
+    JE FINAL;如果按下的是F键则退出
+    JMP SHOW;进行显示 
+L11:
+    MOV DX,0600H
+    MOV AL,00H 
+    OUT DX,AL
+    MOV DX,0604H
+    IN AL,DX
+    AND AL,0FH
+    CMP AL,0FH
+    JE BACK
+    JMP L11
+BACK:    
+    JMP L1 
+    
+SHOW: 
+    PUSH SI
+    PUSH DX
+    PUSH AX;AL里面试数码管的值
+    LEA SI,SHUMA
+    MOV AL,[SI]
+    CMP AL,00H
+    JA L8;AL值为1，从左往右走
+    MOV AL,[SI+1]    
+    MOV DX,0600H
+    OUT DX,AL;选通数码管6，显示最新的数
+    ROR AL,1 
+    CMP AL,11111110B
+    JNE L7 
+    PUSH AX ;如果相等就把表示为置1
+    MOV AL,01H
+    MOV [SI],AL
+    POP AX 
+L7: 
+    MOV [SI+1],AL;将数码管的号更新
+    MOV DX,0602H
+    POP AX;要显示的值弹出
+    OUT DX,AL 
+    JMP L10
+    
+L8:    
+    MOV AL,[SI+1]    
+    MOV DX,0600H
+    OUT DX,AL;选通数码管显示最新的数
+    ROL AL,1 
+    CMP AL,11011111B
+    JNE L9 
+    PUSH AX ;如果相等就把表示为置0
+    MOV AL,00H
+    MOV [SI],AL
+    POP AX 
+L9: 
+    MOV [SI+1],AL;将数码管的号更新
+    MOV DX,0602H
+    POP AX;要显示的值弹出
+    OUT DX,AL
+L10:
+    POP DX
+    POP SI    
+    RET
+    
+
+
+
+DELAY:
+    PUSH CX                  ;延时子程序
+    MOV CX,00FFH
+T1:
+    LOOP T1
+    POP CX
+    RET 
+    
+FINAL:
+    MOV AH,4CH
+    INT 21H
+  
+CODE ENDS
+    END START
+    
+    
+    
+        
+            
